@@ -1,52 +1,29 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/GodKimba/cuddly-golang-server/graph"
+	"github.com/GodKimba/cuddly-golang-server/graph/generated"
 )
 
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/hello" {
-		http.Error(w, "404 not found.", http.StatusNotFound)
-		return
-	}
-
-	// This return a error if method is not GET
-	if r.Method != "GET" {
-		http.Error(w, "Method is not supported", http.StatusNotFound)
-		return
-	}
-
-	fmt.Fprintf(w, "Hello!")
-}
-
-func formHandler(w http.ResponseWriter, r *http.Request) {
-	// Calling ParseForm on http.Request to parse raw query
-	if err := r.ParseForm(); err != nil {
-		fmt.Fprintf(w, "ParseForm() err: %v", err)
-		return
-	}
-	fmt.Fprintf(w, "POST request successful")
-	name := r.FormValue("name")
-	address := r.FormValue("address")
-
-	// Writing the values to the ResponseWriter
-	fmt.Fprintf(w, "Name = %s\n", name)
-	fmt.Fprintf(w, "Address = %s\n", address)
-}
+const defaultPort = "8080"
 
 func main() {
-	// Specifing the Handle route
-	fileServer := http.FileServer(http.Dir("./static"))
-	http.Handle("/", fileServer)
-	// Handling the response and request
-	http.HandleFunc("/hello", helloHandler)
-	http.HandleFunc("/form", formHandler)
-
-	fmt.Printf("Starting server at port 8080\n")
-	// Starting server
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatal(err)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = defaultPort
 	}
+
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
+
+	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	http.Handle("/query", srv)
+
+	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
