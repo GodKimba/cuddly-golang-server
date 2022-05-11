@@ -2,16 +2,11 @@ package database
 
 import (
 	"database/sql"
-	"log"
-	"net/http"
-	"os"
-
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database/mysql"
 	_ "github.com/golang-migrate/migrate/source/file"
+	"log"
 )
 
 var Db *sql.DB
@@ -42,24 +37,5 @@ func Migrate() {
 	)
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		log.Fatal(err)
-	github.com/go-chi/chi}
-}
-
-func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
 	}
-
-	router := chi.NewRouter()
-
-	// Calling init and migrate here to create the database connection at the start of the app
-	database.InitDB()
-	database.Migrate()
-	server := handler.NewDefaultServer(hackernews.NewExecutableSchema(hackernews.Config{Resolvers: &hackernews.Resolver{}}))
-	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/query", server)
-
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, router))
 }
