@@ -16,6 +16,7 @@ import (
 
 var Db *sql.DB
 
+// Creating a connection to the database
 func InitDB() {
 	db, err := sql.Open("mysql", "root:dbpass@tcp(localhost)/hackernews")
 	if err != nil {
@@ -28,6 +29,7 @@ func InitDB() {
 	Db = db
 }
 
+// Runs the migrations files automatically before the app start.
 func Migrate() {
 	if err := Db.Ping(); err != nil {
 		log.Fatal(err)
@@ -51,6 +53,7 @@ func main() {
 
 	router := chi.NewRouter()
 
+	// Calling init and migrate here to create the database connection at the start of the app
 	database.InitDB()
 	database.Migrate()
 	server := handler.NewDefaultServer(hackernews.NewExecutableSchema(hackernews.Config{Resolvers: &hackernews.Resolver{}}))
