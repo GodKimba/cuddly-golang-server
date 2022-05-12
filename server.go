@@ -9,6 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/GodKimba/cuddly-golang-server/graph"
 	"github.com/GodKimba/cuddly-golang-server/graph/generated"
+	"github.com/GodKimba/cuddly-golang-server/internal/auth"
 	database "github.com/GodKimba/cuddly-golang-server/internal/pkg/db/mysql"
 	"github.com/go-chi/chi"
 )
@@ -22,6 +23,8 @@ func main() {
 	}
 
 	router := chi.NewRouter()
+
+	router.Use(auth.Middleware())
 
 	database.InitDB()
 	database.Migrate()
