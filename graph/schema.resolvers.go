@@ -6,10 +6,13 @@ package graph
 import (
 	"context"
 	"fmt"
+	"strconv"
+
 	"github.com/GodKimba/cuddly-golang-server/graph/generated"
 	"github.com/GodKimba/cuddly-golang-server/graph/model"
 	"github.com/GodKimba/cuddly-golang-server/internal/links"
-	"strconv"
+	"github.com/GodKimba/cuddly-golang-server/internal/users"
+	"github.com/GodKimba/cuddly-golang-server/pkg/jwt"
 )
 
 func (r *mutationResolver) CreateLink(ctx context.Context, input model.NewLink) (*model.Link, error) {
@@ -21,7 +24,15 @@ func (r *mutationResolver) CreateLink(ctx context.Context, input model.NewLink) 
 }
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+	var user users.User
+	user.Username = input.Username
+	user.Password = input.Password
+	user.Create()
+	token, err := jwt.GenerateToken(user.Username)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
 func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string, error) {
