@@ -60,3 +60,24 @@ func GetUserIdByUsername(username string) (int, error) {
 	}
 	return Id, nil
 }
+
+// Check if user exists in database, if the users exists and password is correct with generate token and return
+func (user *User) Authenticate() bool {
+	statement, err := database.Db.Prepare("select Password from Users WHERE Username = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	row := statement.QueryRow(user.Username)
+
+	var hashedPassword string
+	err = row.Scan(&hashedPassword)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false
+		} else {
+			log.Fatal(err)
+		}
+	}
+
+	return CheckPasswordHash(user.Password, hashedPassword)
+}
