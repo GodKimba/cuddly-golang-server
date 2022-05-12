@@ -21,6 +21,7 @@ func (user *User) Create() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Saving hashed password into the database
 	hashedPassword, err := HashPassword(user.Password)
 	_, err = statement.Exec(user.Username, hashedPassword)
 	if err != nil {
@@ -28,13 +29,34 @@ func (user *User) Create() {
 	}
 }
 
-//
+// Hashes the given password
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
 }
 
+// Compares raw password with it's hashed value
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+// Checks if a user exists in the database by its given username
+func GetUserIdByUsername(username string) (int, error) {
+	statement, err := database.Db.Prepare("select ID from Users WHERE Username = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Return a pointer to sql.row
+	row := statement.QueryRow(username)
+
+	var Id int
+	err = row.Scan(&Id)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Print(err)
+		}
+		return 0, err
+	}
+	return Id, nil
 }
