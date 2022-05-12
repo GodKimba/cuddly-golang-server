@@ -9,6 +9,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/vektah/gqlparser/v2 v2.4.2
+	golang.org/x/crypto v0.0.0-20220511200225-c6db032c6c88
 )
 
 require (
