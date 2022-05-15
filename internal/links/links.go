@@ -16,13 +16,13 @@ type Link struct {
 // This function insert a link object into the database and return it's ID
 func (link Link) Save() int64 {
 	// Used prepare here before exec for security(?)
-	stmt, err := database.Db.Prepare("INSERT INTO Links(Title,Address) VALUE(?,?)")
+	stmt, err := database.Db.Prepare("INSERT INTO Links(Title,Address,UserID) VALUE(?,?,?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Actually inserting
-	res, err := stmt.Exec(link.Title, link.Address)
+	res, err := stmt.Exec(link.Title, link.Address, link.User.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func (link Link) Save() int64 {
 
 // Function to get all the links from the database and pass it to the graphql server
 func GetAll() []Link {
-	stmt, err := database.Db.Prepare("select id, title, address from Links")
+	stmt, err := database.Db.Prepare("select L.id, L.title, L.address, L.UserID, U.Username from Links L inner join Users U on L.UserID = U.ID")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,11 +49,17 @@ func GetAll() []Link {
 	}
 	defer rows.Close()
 	var links []Link
+	var username string
+	var id string
 	for rows.Next() {
 		var link Link
-		err := rows.Scan(&link.ID, &link.Title, &link.Address)
+		err := rows.Scan(&link.ID, &link.Title, &link.Address, &id, &username)
 		if err != nil {
 			log.Fatal(err)
+		}
+		link.User = &users.User{
+			ID:       id,
+			Username: username,
 		}
 		links = append(links, link)
 	}

@@ -10,17 +10,31 @@ import (
 
 	"github.com/GodKimba/cuddly-golang-server/graph/generated"
 	"github.com/GodKimba/cuddly-golang-server/graph/model"
+	"github.com/GodKimba/cuddly-golang-server/internal/auth"
 	"github.com/GodKimba/cuddly-golang-server/internal/links"
 	"github.com/GodKimba/cuddly-golang-server/internal/users"
 	"github.com/GodKimba/cuddly-golang-server/pkg/jwt"
 )
 
 func (r *mutationResolver) CreateLink(ctx context.Context, input model.NewLink) (*model.Link, error) {
+	user := auth.ForContext(ctx)
+	// if user not set, return error
+	if user == nil {
+		return &model.Link{}, fmt.Errorf("access denied")
+	}
 	var link links.Link
 	link.Title = input.Title
 	link.Address = input.Address
+
+	link.User = user
 	linkID := link.Save()
-	return &model.Link{ID: strconv.FormatInt(linkID, 10), Title: link.Title, Address: link.Address}, nil
+	graphqlUser := &model.User{
+		ID:   user.ID,
+		Name: user.Username,
+	}
+
+	return &model.Link{ID: strconv.FormatInt(linkID, 10), Title: link.Title, Address: link.Address, User: graphqlUser}, nil
+
 }
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (string, error) {
@@ -67,7 +81,11 @@ func (r *queryResolver) Links(ctx context.Context) ([]*model.Link, error) {
 	var dbLinks []links.Link
 	dbLinks = links.GetAll()
 	for _, link := range dbLinks {
-		resultLinks = append(resultLinks, &model.Link{ID: link.ID, Title: link.Title, Address: link.Address})
+		graphqlUser := &model.User{
+			ID:   link.User.ID,
+			Name: link.User.Username,
+		}
+		resultLinks = append(resultLinks, &model.Link{ID: link.ID, Title: link.Title, Address: link.Address, User: graphqlUser})
 	}
 	return resultLinks, nil
 }

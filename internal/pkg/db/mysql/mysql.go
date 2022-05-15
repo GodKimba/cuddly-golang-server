@@ -24,6 +24,10 @@ func InitDB() {
 	Db = db
 }
 
+func CloseDB() error {
+	return Db.Close()
+}
+
 // Runs the migrations files automatically before the app start.
 func Migrate() {
 	if err := Db.Ping(); err != nil {
